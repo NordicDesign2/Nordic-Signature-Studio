@@ -346,8 +346,8 @@ function render(){
   let html = `
   <table cellpadding="0" cellspacing="0" border="0" style="font-family:Arial,Helvetica,sans-serif; border-collapse:collapse;">
     <tr>
-      <td style="vertical-align:middle; padding-right:8px;" rowspan="2">
-        <img src="${b.src}" width="${b.width}" height="${b.height}" alt="${b.company}" style="display:block; border:0; outline:0;">
+      <td width="${b.width}" style="vertical-align:middle; padding-right:8px; width:${b.width}px; min-width:${b.width}px;" rowspan="2">
+        <img src="${b.src}" width="${b.width}" height="${b.height}" alt="${b.company}" style="display:block; border:0; outline:0; width:${b.width}px; height:${b.height}px; max-width:none;">
       </td>
       <td style="vertical-align:bottom; padding-left:14px;">
         <table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
