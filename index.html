@@ -240,7 +240,7 @@ const LOGOS = {
     width: 96, height: 87, stack: true,
     company: 'Nordic Laboratories & dnalife',
     accent: '#007EA2',
-    website: 'nordiclabs.com',
+    website: 'nordiclabs.com', websites: ['nordiclabs.com', 'dnalife.healthcare'],
     domain: 'nordiclabs.com'
   }
 };
@@ -340,7 +340,7 @@ function render(){
       `<span style="font-weight:bold; color:#5B6B70;">${b.company}</span>`,
       phone ? esc(phone) : '',
       email ? `<a href="mailto:${esc(email)}" style="color:#5B6B70;text-decoration:none;">${esc(email)}</a>` : '',
-      `<a href="https://${b.website}" style="color:#5B6B70; text-decoration:none;">${b.website}</a>`
+      ...(b.websites || [b.website]).map(site => `<a href="https://${site}" style="color:#5B6B70; text-decoration:none;">${site}</a>`)
     ].filter(Boolean).join(' &nbsp;//&nbsp; ');
 
   const imgTag = (src, w, h, alt, extra) => `<img src="${src}" width="${w}" height="${h}" alt="${alt}" style="display:block; border:0; outline:0; width:${w}px; height:${h}px; max-width:none;${extra || ''}">`;
