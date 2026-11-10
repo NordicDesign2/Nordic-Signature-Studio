@@ -165,6 +165,18 @@ input:focus{outline:2px solid var(--accent); outline-offset:1px;}
     </div>
     <p style="font-size:12px; color:var(--muted); margin:8px 0 0 0; line-height:1.5;">Paste your Calendly (or any booking page) link and a button appears in your signature. Leave it empty for no button.</p>
 
+    <div style="margin-top:18px; padding-top:16px; border-top:1px solid var(--border-soft);">
+      <div class="field full">
+        <label for="f-headshot">Headshot (optional)</label>
+        <input type="file" id="f-headshot" accept="image/png,image/jpeg,image/webp" onchange="onHeadshotFile(event)">
+      </div>
+      <div id="headshot-row" hidden style="display:flex; align-items:center; gap:12px; margin-top:10px;">
+        <img id="headshot-thumb" alt="" style="width:48px; height:48px; border-radius:50%; display:block; border:1px solid var(--border);">
+        <button type="button" class="copy-btn" style="background:transparent; color:var(--muted); border:1px solid var(--border); padding:6px 11px; font-size:12px;" onclick="removeHeadshot()">Remove</button>
+      </div>
+      <p style="font-size:12px; color:var(--muted); margin:8px 0 0 0; line-height:1.5;">A head-and-shoulders photo works best. It's cropped to a circle from the centre of the photo and shrunk to a small file automatically.</p>
+    </div>
+
     <div class="check-row">
       <input type="checkbox" id="f-disclaimer" checked onchange="render()">
       <label for="f-disclaimer">Include confidentiality notice</label>
@@ -184,14 +196,17 @@ input:focus{outline:2px solid var(--accent); outline-offset:1px;}
           <input type="checkbox" id="preset-copenhagen" onchange="onPresetToggle()">
           <label for="preset-copenhagen">The Nordic Conference &mdash; Copenhagen, 20&ndash;22 Nov 2026</label>
         </div>
+        <input type="text" inputmode="url" id="link-copenhagen" class="banner-link" hidden placeholder="Link for this banner (optional), e.g. nordic-labs.com/events" oninput="render()" style="width:100%; box-sizing:border-box; padding:8px 11px; font-size:13px; border:1px solid var(--border); border-radius:8px; font-family:inherit; color:var(--ink, #1F2A2E); background:#fff; margin:-2px 0 4px 28px; width:calc(100% - 28px);">
         <div class="check-row" style="margin-top:0;">
           <input type="checkbox" id="preset-frankfurt" onchange="onPresetToggle()">
           <label for="preset-frankfurt">Die Nordic Konferenz &mdash; Frankfurt, 7&ndash;8 Nov 2026</label>
         </div>
+        <input type="text" inputmode="url" id="link-frankfurt" class="banner-link" hidden placeholder="Link for this banner (optional), e.g. nordic-labs.com/events" oninput="render()" style="width:100%; box-sizing:border-box; padding:8px 11px; font-size:13px; border:1px solid var(--border); border-radius:8px; font-family:inherit; color:var(--ink, #1F2A2E); background:#fff; margin:-2px 0 4px 28px; width:calc(100% - 28px);">
         <div class="check-row" style="margin-top:0;">
           <input type="checkbox" id="preset-sydney" onchange="onPresetToggle()">
           <label for="preset-sydney">dnalife Certification Course &mdash; Sydney, 14&ndash;15 Nov 2026</label>
         </div>
+        <input type="text" inputmode="url" id="link-sydney" class="banner-link" hidden placeholder="Link for this banner (optional), e.g. nordic-labs.com/events" oninput="render()" style="width:100%; box-sizing:border-box; padding:8px 11px; font-size:13px; border:1px solid var(--border); border-radius:8px; font-family:inherit; color:var(--ink, #1F2A2E); background:#fff; margin:-2px 0 4px 28px; width:calc(100% - 28px);">
       </div>
 
       <div style="margin-top:18px; padding-top:16px; border-top:1px solid var(--border-soft);">
@@ -282,6 +297,11 @@ function toggleBanner(){
 }
 
 function onPresetToggle(){
+  ['copenhagen', 'frankfurt', 'sydney'].forEach(key => {
+    const box = document.getElementById('preset-' + key);
+    const link = document.getElementById('link-' + key);
+    if (box && link) link.hidden = !box.checked;
+  });
   render();
 }
 
@@ -290,6 +310,7 @@ function renderCustomBannerList(){
   wrap.innerHTML = customBanners.map(b => `
     <div style="display:flex; align-items:center; gap:10px;">
       <img src="${b.src}" style="max-width:160px; max-height:56px; border:1px solid var(--border); border-radius:6px; display:block;">
+      <input type="text" inputmode="url" placeholder="Link (optional)" value="${esc(b.link || '')}" oninput="setCustomBannerLink(${b.id}, this.value)" style="width:100%; box-sizing:border-box; padding:8px 11px; font-size:13px; border:1px solid var(--border); border-radius:8px; font-family:inherit; color:var(--ink, #1F2A2E); background:#fff; flex:1; min-width:0;">
       <button type="button" class="copy-btn" style="background:transparent; color:var(--muted); border:1px solid var(--border); padding:6px 11px; font-size:12px;" onclick="removeCustomBanner(${b.id})">Remove</button>
     </div>
   `).join('');
@@ -305,7 +326,7 @@ function onBannerFile(event){
     if (file.size > 1.5 * 1024 * 1024) anyLarge = true;
     const reader = new FileReader();
     reader.onload = function(e){
-      customBanners.push({ id: ++customBannerSeq, src: e.target.result });
+      customBanners.push({ id: ++customBannerSeq, src: e.target.result, link: '' });
       renderCustomBannerList();
       render();
     };
@@ -316,18 +337,72 @@ function onBannerFile(event){
   event.target.value = '';
 }
 
+let headshotSrc = null;
+const HEADSHOT_SIZE = 60; // shown size in px; saved at 2x so it stays sharp
+
+function onHeadshotFile(event){
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      // Centre-crop to a square, bake in a circle on white, save as a small JPEG
+      const px = HEADSHOT_SIZE * 2;
+      const canvas = document.createElement('canvas');
+      canvas.width = canvas.height = px;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, px, px);
+      ctx.beginPath();
+      ctx.arc(px / 2, px / 2, px / 2, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.clip();
+      const side = Math.min(img.width, img.height);
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, px, px);
+      headshotSrc = canvas.toDataURL('image/jpeg', 0.88);
+      document.getElementById('headshot-thumb').src = headshotSrc;
+      document.getElementById('headshot-row').hidden = false;
+      render();
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+  event.target.value = '';
+}
+
+function removeHeadshot(){
+  headshotSrc = null;
+  document.getElementById('headshot-row').hidden = true;
+  render();
+}
+
+function setCustomBannerLink(id, value){
+  const banner = customBanners.find(b => b.id === id);
+  if (banner){ banner.link = value; render(); }
+}
+
 function removeCustomBanner(id){
   customBanners = customBanners.filter(b => b.id !== id);
   renderCustomBannerList();
   render();
 }
 
+// Turn "calendly.com/x" or "https://..." into a safe https link; empty stays empty
+function toUrl(raw){
+  raw = (raw || '').trim();
+  if (!raw) return '';
+  const url = /^https?:\/\//i.test(raw) ? raw : 'https://' + raw.replace(/^\/+/, '');
+  return url.replace(/\s/g, '').replace(/"/g, '%22');
+}
+
 function getSelectedBanners(){
   const order = ['copenhagen', 'frankfurt', 'sydney'];
   const selected = order
     .filter(key => document.getElementById('preset-' + key) && document.getElementById('preset-' + key).checked)
-    .map(key => BANNER_PRESETS[key]);
-  return selected.concat(customBanners.map(b => b.src));
+    .map(key => ({ src: BANNER_PRESETS[key], link: document.getElementById('link-' + key).value }));
+  return selected.concat(customBanners.map(b => ({ src: b.src, link: b.link })));
 }
 
 function setBrand(brand){
@@ -370,8 +445,7 @@ function render(){
   // Optional "Book a call" button (Calendly or any booking page)
   let bookingHtml = '';
   if (bookingRaw){
-    let url = /^https?:\/\//i.test(bookingRaw) ? bookingRaw : 'https://' + bookingRaw.replace(/^\/+/, '');
-    url = url.replace(/\s/g, '').replace(/"/g, '%22');
+    const url = toUrl(bookingRaw);
     bookingHtml = `
           <tr><td style="padding:10px 0 0 0;">
             <table cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;">
@@ -391,9 +465,14 @@ function render(){
         </table>`
     : imgTag(b.src, b.width, b.height, b.company);
 
+  const headshotCell = headshotSrc
+    ? `<td width="${HEADSHOT_SIZE}" rowspan="2" style="vertical-align:top; padding-right:12px; width:${HEADSHOT_SIZE}px; min-width:${HEADSHOT_SIZE}px;">${imgTag(headshotSrc, HEADSHOT_SIZE, HEADSHOT_SIZE, name, ' border-radius:50%;')}</td>`
+    : '';
+
   let html = `
   <table cellpadding="0" cellspacing="0" border="0" style="font-family:Arial,Helvetica,sans-serif; border-collapse:collapse;">
     <tr>
+      ${headshotCell}
       <td width="${b.width}" style="vertical-align:top; padding-right:8px; width:${b.width}px; min-width:${b.width}px;" rowspan="2">
         ${logoHtml}
       </td>
@@ -418,7 +497,7 @@ function render(){
   if (includeDisclaimer){
     html += `
     <tr>
-      <td colspan="2" style="padding-top:14px;">
+      <td colspan="${headshotSrc ? 3 : 2}" style="padding-top:14px;">
         <table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse; border-top:1px solid #E0E0E0; width:100%;">
           <tr><td style="padding-top:9px; font-family:Arial,Helvetica,sans-serif; font-size:10px; line-height:1.5; color:#9AA5A8; max-width:420px;">
             This email and any attachments are confidential and intended solely for the addressee. If you have received this in error, please notify the sender and delete it.
@@ -433,11 +512,13 @@ function render(){
   const bannerOn = document.getElementById('f-banner-on').checked;
   if (bannerOn){
     const banners = getSelectedBanners();
-    banners.forEach(src => {
+    banners.forEach(({ src, link }) => {
+      const img = `<img src="${src}" alt="Event banner" style="display:block; border:0; outline:0; max-width:600px; width:100%; height:auto;">`;
+      const url = toUrl(link);
       html += `
     <table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse; margin-top:14px;">
       <tr><td style="padding:0;">
-        <img src="${src}" alt="Event banner" style="display:block; border:0; outline:0; max-width:600px; width:100%; height:auto;">
+        ${url ? `<a href="${esc(url)}" target="_blank" style="display:block; border:0; text-decoration:none;">${img}</a>` : img}
       </td></tr>
     </table>`;
     });
