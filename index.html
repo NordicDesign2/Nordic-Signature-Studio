@@ -434,13 +434,18 @@ function render(){
       email ? `<a href="mailto:${esc(email)}" style="color:${b.accent};text-decoration:none;">${esc(email)}</a>` : ''
     ].filter(Boolean).join(' &nbsp;|&nbsp; ');
 
-  const flowLine = [
-      `<span style="font-weight:bold; color:#5B6B70;">${b.company}</span>`,
-      phone ? `<span style="white-space:nowrap;">${esc(phone)}</span>` : '',
-      phone2 ? `<span style="white-space:nowrap;">${esc(phone2)}</span>` : '',
+  // Contact details stacked on separate lines: company / phone(s) / email & website(s)
+  const SEP = ' &nbsp;//&nbsp; ';
+  const LINE_H = 17; // px per line of contact text; the headshot-layout logo is 3 lines tall
+  const detailLines = [
+    `<span style="font-weight:bold; color:#5B6B70;">${b.company}</span>`,
+    [phone, phone2].filter(Boolean).map(n => `<span style="white-space:nowrap;">${esc(n)}</span>`).join(SEP),
+    [
       email ? `<a href="mailto:${esc(email)}" style="color:#5B6B70;text-decoration:none;">${esc(email)}</a>` : '',
       ...(b.websites || [b.website]).map(site => `<a href="https://${site}" style="color:#5B6B70; text-decoration:none; white-space:nowrap;">${site}</a>`)
-    ].filter(Boolean).join(' &nbsp;//&nbsp; ');
+    ].filter(Boolean).join(SEP)
+  ].filter(Boolean);
+  const flowLine = detailLines.join('<br>');
 
   // Optional "Book a call" button (Calendly or any booking page)
   let bookingHtml = '';
@@ -471,8 +476,8 @@ function render(){
           <tr><td style="font-family:Arial,Helvetica,sans-serif; font-size:11px; line-height:1.3; font-weight:bold; letter-spacing:0.08em; color:${b.accent}; text-transform:uppercase; padding:0;">${esc(title)}</td></tr>
         </table>`;
   const detailsRows = `
-          <tr><td style="font-family:Arial,Helvetica,sans-serif; font-size:11.5px; line-height:1.5; color:#5B6B70;">${flowLine}</td></tr>
-          ${address ? `<tr><td style="font-family:Arial,Helvetica,sans-serif; font-size:11.5px; line-height:1.5; color:#5B6B70; padding-top:2px;"><img src="${PIN_ICON}" width="9" height="12" alt="" style="display:inline-block; width:9px; height:12px; border:0; outline:0; vertical-align:-1px; margin-right:5px; max-width:none;">${esc(address)}</td></tr>` : ''}
+          ${detailLines.map(line => `<tr><td style="font-family:Arial,Helvetica,sans-serif; font-size:11.5px; line-height:${LINE_H}px; color:#5B6B70; padding:0;">${line}</td></tr>`).join('')}
+          ${address ? `<tr><td style="font-family:Arial,Helvetica,sans-serif; font-size:11.5px; line-height:${LINE_H}px; color:#5B6B70; padding-top:2px;"><img src="${PIN_ICON}" width="9" height="12" alt="" style="display:inline-block; width:9px; height:12px; border:0; outline:0; vertical-align:-1px; margin-right:5px; max-width:none;">${esc(address)}</td></tr>` : ''}
           ${bookingHtml}`;
   const divider = `<tr><td style="border-top:1px solid ${b.accent}; font-size:1px; line-height:1px; padding:0 0 9px 0;">&nbsp;</td></tr>`;
 
@@ -480,7 +485,15 @@ function render(){
   if (headshotSrc){
     // With a headshot: photo + name on top, the line, then logo beside company & contact details.
     // Both rows share one left column so the name and the contact details line up on the left.
-    const leftW = Math.max(b.width, HEADSHOT_SIZE);
+    // Logo beside the contact details is exactly three lines of text tall
+    const LOGO_H = LINE_H * 3;
+    const DETAIL_LOGOS = {
+      nordic:  { src: LOGOS.nordic.src,  w: LOGO_H, h: LOGO_H },
+      dnalife: { src: LOGOS.dnalife.src, w: Math.round(LOGO_H * 260 / 99), h: LOGO_H },
+      dual:    { src: LOGOS.dual.src,    w: Math.round(LOGO_H * 2.982), h: LOGO_H }
+    };
+    const dl = DETAIL_LOGOS[currentBrand];
+    const leftW = Math.max(dl.w, HEADSHOT_SIZE);
     html = `
   <table cellpadding="0" cellspacing="0" border="0" style="font-family:Arial,Helvetica,sans-serif; border-collapse:collapse;">
     <tr>
@@ -496,7 +509,7 @@ function render(){
     </tr>
     <tr>
       <td width="${leftW}" align="center" style="vertical-align:top; text-align:center; padding:0 14px 0 0; width:${leftW}px; min-width:${leftW}px;">
-        ${b.stack ? logoHtml : imgTag(b.src, b.width, b.height, b.company, ' margin:0 auto;')}
+        ${imgTag(dl.src, dl.w, dl.h, b.company, ' margin:0 auto;')}
       </td>
       <td style="vertical-align:top; padding:0;">
         <table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse; width:100%;">
