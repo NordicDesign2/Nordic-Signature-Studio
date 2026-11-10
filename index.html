@@ -174,7 +174,7 @@ input:focus{outline:2px solid var(--accent); outline-offset:1px;}
         <img id="headshot-thumb" alt="" style="width:48px; height:48px; border-radius:50%; display:block; border:1px solid var(--border);">
         <button type="button" class="copy-btn" style="background:transparent; color:var(--muted); border:1px solid var(--border); padding:6px 11px; font-size:12px;" onclick="removeHeadshot()">Remove</button>
       </div>
-      <p style="font-size:12px; color:var(--muted); margin:8px 0 0 0; line-height:1.5;">A head-and-shoulders photo works best. It's cropped to a circle from the centre of the photo and takes the logo's place on the left, with a smaller logo moving up beside your name.</p>
+      <p style="font-size:12px; color:var(--muted); margin:8px 0 0 0; line-height:1.5;">A head-and-shoulders photo works best. It's cropped to a circle from the centre of the photo and sits beside your name at the top, with the logo moving down beside your contact details.</p>
     </div>
 
     <div class="check-row">
@@ -338,7 +338,7 @@ function onBannerFile(event){
 }
 
 let headshotSrc = null;
-const HEADSHOT_SIZE = 60; // shown size in px; saved at 2x so it stays sharp
+const HEADSHOT_SIZE = 48; // shown size in px; saved at 2x so it stays sharp
 
 function onHeadshotFile(event){
   const file = event.target.files && event.target.files[0];
@@ -465,48 +465,72 @@ function render(){
         </table>`
     : imgTag(b.src, b.width, b.height, b.company);
 
-  // With a headshot: the photo takes the left column and a small logo sits beside the name
-  const SMALL_LOGOS = {
-    nordic:  { src: LOGOS.nordic.src,  w: 40,  h: 40 },
-    dnalife: { src: LOGOS.dnalife.src, w: 105, h: 40 },
-    dual:    { src: LOGOS.dual.src,    w: 119, h: 40 }
-  };
-  const smallLogo = SMALL_LOGOS[currentBrand];
-  const leftWidth = headshotSrc ? HEADSHOT_SIZE : b.width;
-  const leftHtml = headshotSrc
-    ? imgTag(headshotSrc, HEADSHOT_SIZE, HEADSHOT_SIZE, name, ' border-radius:50%;')
-    : logoHtml;
-  const headshotCell = headshotSrc
-    ? `<td width="${smallLogo.w}" style="vertical-align:bottom; padding:0 12px 0 0; width:${smallLogo.w}px; min-width:${smallLogo.w}px;">${imgTag(smallLogo.src, smallLogo.w, smallLogo.h, b.company)}</td>`
-    : '';
-
-  let html = `
-  <table cellpadding="0" cellspacing="0" border="0" style="font-family:Arial,Helvetica,sans-serif; border-collapse:collapse;">
-    <tr>
-      <td width="${leftWidth}" style="vertical-align:top; padding-right:8px; width:${leftWidth}px; min-width:${leftWidth}px;" rowspan="2">
-        ${leftHtml}
-      </td>
-      <td style="vertical-align:bottom; padding-left:14px;">
-        <table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;"><tr>
-        ${headshotCell}
-        <td style="vertical-align:bottom; padding:0;">
+  const nameBlock = `
         <table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
           <tr><td style="font-family:Arial,Helvetica,sans-serif; font-size:17px; line-height:1.25; font-weight:bold; color:${b.accent}; padding:0 0 3px 0;">${esc(name)}</td></tr>
           <tr><td style="font-family:Arial,Helvetica,sans-serif; font-size:11px; line-height:1.3; font-weight:bold; letter-spacing:0.08em; color:${b.accent}; text-transform:uppercase; padding:0;">${esc(title)}</td></tr>
+        </table>`;
+  const detailsRows = `
+          <tr><td style="font-family:Arial,Helvetica,sans-serif; font-size:11.5px; line-height:1.5; color:#5B6B70;">${flowLine}</td></tr>
+          ${address ? `<tr><td style="font-family:Arial,Helvetica,sans-serif; font-size:11.5px; line-height:1.5; color:#5B6B70; padding-top:2px;"><img src="${PIN_ICON}" width="9" height="12" alt="" style="display:inline-block; width:9px; height:12px; border:0; outline:0; vertical-align:-1px; margin-right:5px; max-width:none;">${esc(address)}</td></tr>` : ''}
+          ${bookingHtml}`;
+  const divider = `<tr><td style="border-top:1px solid ${b.accent}; font-size:1px; line-height:1px; padding:0 0 9px 0;">&nbsp;</td></tr>`;
+
+  // Compact logos for the headshot layout, sized to sit beside the contact details
+  const COMPACT_LOGOS = {
+    nordic:  { src: LOGOS.nordic.src,  w: 44,  h: 44 },
+    dnalife: { src: LOGOS.dnalife.src, w: 105, h: 40 },
+    dual:    { src: LOGOS.dual.src,    w: 119, h: 40 }
+  };
+  const compact = COMPACT_LOGOS[currentBrand];
+
+  let html;
+  if (headshotSrc){
+    // With a headshot: photo + name on top, the line, then logo beside company & contact details
+    html = `
+  <table cellpadding="0" cellspacing="0" border="0" style="font-family:Arial,Helvetica,sans-serif; border-collapse:collapse;">
+    <tr>
+      <td colspan="2" style="padding:0;">
+        <table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;"><tr>
+          <td width="${HEADSHOT_SIZE}" style="vertical-align:middle; padding:0 12px 0 0; width:${HEADSHOT_SIZE}px; min-width:${HEADSHOT_SIZE}px;">${imgTag(headshotSrc, HEADSHOT_SIZE, HEADSHOT_SIZE, name, ' border-radius:50%;')}</td>
+          <td style="vertical-align:middle; padding:0;">${nameBlock}</td>
+        </tr></table>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="2" style="padding-top:10px;">
+        <table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse; width:100%;">${divider}</table>
+      </td>
+    </tr>
+    <tr>
+      <td width="${compact.w}" style="vertical-align:top; padding:0 14px 0 0; width:${compact.w}px; min-width:${compact.w}px;">
+        ${imgTag(compact.src, compact.w, compact.h, b.company)}
+      </td>
+      <td style="vertical-align:top; padding:0;">
+        <table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse; width:100%;">
+          ${detailsRows}
         </table>
-        </td></tr></table>
+      </td>
+    </tr>`;
+  } else {
+    html = `
+  <table cellpadding="0" cellspacing="0" border="0" style="font-family:Arial,Helvetica,sans-serif; border-collapse:collapse;">
+    <tr>
+      <td width="${b.width}" style="vertical-align:top; padding-right:8px; width:${b.width}px; min-width:${b.width}px;" rowspan="2">
+        ${logoHtml}
+      </td>
+      <td style="vertical-align:bottom; padding-left:14px;">${nameBlock}
       </td>
     </tr>
     <tr>
       <td style="vertical-align:top; padding-left:14px; padding-top:9px;">
         <table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse; width:100%;">
-          <tr><td style="border-top:1px solid ${b.accent}; font-size:1px; line-height:1px; padding:0 0 9px 0;">&nbsp;</td></tr>
-          <tr><td style="font-family:Arial,Helvetica,sans-serif; font-size:11.5px; line-height:1.5; color:#5B6B70;">${flowLine}</td></tr>
-          ${address ? `<tr><td style="font-family:Arial,Helvetica,sans-serif; font-size:11.5px; line-height:1.5; color:#5B6B70; padding-top:2px;"><img src="${PIN_ICON}" width="9" height="12" alt="" style="display:inline-block; width:9px; height:12px; border:0; outline:0; vertical-align:-1px; margin-right:5px; max-width:none;">${esc(address)}</td></tr>` : ''}
-          ${bookingHtml}
+          ${divider}
+          ${detailsRows}
         </table>
       </td>
     </tr>`;
+  }
 
   if (includeDisclaimer){
     html += `
