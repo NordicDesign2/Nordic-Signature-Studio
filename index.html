@@ -476,26 +476,18 @@ function render(){
           ${bookingHtml}`;
   const divider = `<tr><td style="border-top:1px solid ${b.accent}; font-size:1px; line-height:1px; padding:0 0 9px 0;">&nbsp;</td></tr>`;
 
-  // Compact logos for the headshot layout, sized to sit beside the contact details
-  const COMPACT_LOGOS = {
-    nordic:  { src: LOGOS.nordic.src,  w: 44,  h: 44 },
-    dnalife: { src: LOGOS.dnalife.src, w: 105, h: 40 },
-    dual:    { src: LOGOS.dual.src,    w: 119, h: 40 }
-  };
-  const compact = COMPACT_LOGOS[currentBrand];
-
   let html;
   if (headshotSrc){
-    // With a headshot: photo + name on top, the line, then logo beside company & contact details
+    // With a headshot: photo + name on top, the line, then logo beside company & contact details.
+    // Both rows share one left column so the name and the contact details line up on the left.
+    const leftW = Math.max(b.width, HEADSHOT_SIZE);
     html = `
   <table cellpadding="0" cellspacing="0" border="0" style="font-family:Arial,Helvetica,sans-serif; border-collapse:collapse;">
     <tr>
-      <td colspan="2" style="padding:0;">
-        <table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;"><tr>
-          <td width="${HEADSHOT_SIZE}" style="vertical-align:middle; padding:0 12px 0 0; width:${HEADSHOT_SIZE}px; min-width:${HEADSHOT_SIZE}px;">${imgTag(headshotSrc, HEADSHOT_SIZE, HEADSHOT_SIZE, name, ' border-radius:50%;')}</td>
-          <td style="vertical-align:middle; padding:0;">${nameBlock}</td>
-        </tr></table>
+      <td width="${leftW}" style="vertical-align:middle; padding:0 14px 0 0; width:${leftW}px; min-width:${leftW}px;">
+        ${imgTag(headshotSrc, HEADSHOT_SIZE, HEADSHOT_SIZE, name, ' border-radius:50%;')}
       </td>
+      <td style="vertical-align:middle; padding:0;">${nameBlock}</td>
     </tr>
     <tr>
       <td colspan="2" style="padding-top:10px;">
@@ -503,8 +495,8 @@ function render(){
       </td>
     </tr>
     <tr>
-      <td width="${compact.w}" style="vertical-align:top; padding:0 14px 0 0; width:${compact.w}px; min-width:${compact.w}px;">
-        ${imgTag(compact.src, compact.w, compact.h, b.company)}
+      <td width="${leftW}" style="vertical-align:top; padding:0 14px 0 0; width:${leftW}px; min-width:${leftW}px;">
+        ${logoHtml}
       </td>
       <td style="vertical-align:top; padding:0;">
         <table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse; width:100%;">
