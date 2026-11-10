@@ -494,7 +494,7 @@ function render(){
     const LOGO_H = LINE_H * (b.stack ? 4 : 3);
     const DETAIL_LOGOS = {
       nordic:  { src: LOGOS.nordic.src,  w: LOGO_H, h: LOGO_H },
-      dnalife: { src: LOGOS.dnalife.src, w: Math.round(LOGO_H * 260 / 99), h: LOGO_H },
+      dnalife: { src: LOGOS.dnalife.src, w: 105, h: 40 },
       dual:    { w: 84, h: 80 }
     };
     const dl = DETAIL_LOGOS[currentBrand];
@@ -506,8 +506,8 @@ function render(){
         </table>`
       : imgTag(dl.src, dl.w, dl.h, b.company, ' margin:0 auto;');
     const leftW = Math.max(dl.w, HEADSHOT_SIZE);
-    // Dual: the stacked logos are taller than the text, so centre the two against each other
-    const detailAlign = b.stack ? 'middle' : 'top';
+    // Dual (taller logos) and dnalife (shorter wordmark): centre logo and text against each other
+    const detailAlign = (b.stack || currentBrand === 'dnalife') ? 'middle' : 'top';
     html = `
   <table cellpadding="0" cellspacing="0" border="0" style="font-family:Arial,Helvetica,sans-serif; border-collapse:collapse;">
     <tr>
