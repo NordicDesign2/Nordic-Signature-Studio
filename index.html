@@ -440,10 +440,12 @@ function render(){
   const detailLines = [
     `<span style="font-weight:bold; color:#5B6B70;">${b.company}</span>`,
     [phone, phone2].filter(Boolean).map(n => `<span style="white-space:nowrap;">${esc(n)}</span>`).join(SEP),
-    [
-      email ? `<a href="mailto:${esc(email)}" style="color:#5B6B70;text-decoration:none;">${esc(email)}</a>` : '',
-      ...(b.websites || [b.website]).map(site => `<a href="https://${site}" style="color:#5B6B70; text-decoration:none; white-space:nowrap;">${site}</a>`)
-    ].filter(Boolean).join(SEP)
+    ...(() => {
+      const emailLink = email ? `<a href="mailto:${esc(email)}" style="color:#5B6B70;text-decoration:none;">${esc(email)}</a>` : '';
+      const sites = (b.websites || [b.website]).map(site => `<a href="https://${site}" style="color:#5B6B70; text-decoration:none; white-space:nowrap;">${site}</a>`);
+      // Dual brand: both websites get their own line (four lines in all)
+      return b.websites ? [emailLink, sites.join(SEP)] : [[emailLink, ...sites].filter(Boolean).join(SEP)];
+    })()
   ].filter(Boolean);
   const flowLine = detailLines.join('<br>');
 
@@ -485,14 +487,21 @@ function render(){
   if (headshotSrc){
     // With a headshot: photo + name on top, the line, then logo beside company & contact details.
     // Both rows share one left column so the name and the contact details line up on the left.
-    // Logo beside the contact details is exactly three lines of text tall
-    const LOGO_H = LINE_H * 3;
+    // Logo beside the contact details matches the contact text: 3 lines, or 4 for the dual brand
+    const LOGO_H = LINE_H * (b.stack ? 4 : 3);
     const DETAIL_LOGOS = {
       nordic:  { src: LOGOS.nordic.src,  w: LOGO_H, h: LOGO_H },
       dnalife: { src: LOGOS.dnalife.src, w: Math.round(LOGO_H * 260 / 99), h: LOGO_H },
-      dual:    { src: LOGOS.dual.src,    w: Math.round(LOGO_H * 2.982), h: LOGO_H }
+      dual:    { w: 84, h: 80 }
     };
     const dl = DETAIL_LOGOS[currentBrand];
+    // Dual: Nordic Labs stacked above dnalife, a little taller than the four lines of text (40 + 8 gap + 32)
+    const detailLogoHtml = b.stack
+      ? `<table cellpadding="0" cellspacing="0" border="0" align="center" style="border-collapse:collapse; margin:0 auto;">
+          <tr><td align="center" style="padding:0 0 8px 0;">${imgTag(LOGOS.nordic.src, 40, 40, 'Nordic Laboratories', ' margin:0 auto;')}</td></tr>
+          <tr><td align="center" style="padding:0;">${imgTag(LOGOS.dnalife.src, 84, 32, 'dnalife', ' margin:0 auto;')}</td></tr>
+        </table>`
+      : imgTag(dl.src, dl.w, dl.h, b.company, ' margin:0 auto;');
     const leftW = Math.max(dl.w, HEADSHOT_SIZE);
     html = `
   <table cellpadding="0" cellspacing="0" border="0" style="font-family:Arial,Helvetica,sans-serif; border-collapse:collapse;">
@@ -509,7 +518,7 @@ function render(){
     </tr>
     <tr>
       <td width="${leftW}" align="center" style="vertical-align:top; text-align:center; padding:0 14px 0 0; width:${leftW}px; min-width:${leftW}px;">
-        ${imgTag(dl.src, dl.w, dl.h, b.company, ' margin:0 auto;')}
+        ${detailLogoHtml}
       </td>
       <td style="vertical-align:top; padding:0;">
         <table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse; width:100%;">
