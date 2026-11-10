@@ -174,7 +174,7 @@ input:focus{outline:2px solid var(--accent); outline-offset:1px;}
         <img id="headshot-thumb" alt="" style="width:48px; height:48px; border-radius:50%; display:block; border:1px solid var(--border);">
         <button type="button" class="copy-btn" style="background:transparent; color:var(--muted); border:1px solid var(--border); padding:6px 11px; font-size:12px;" onclick="removeHeadshot()">Remove</button>
       </div>
-      <p style="font-size:12px; color:var(--muted); margin:8px 0 0 0; line-height:1.5;">A head-and-shoulders photo works best. It's cropped to a small circle from the centre of the photo and sits beside your name.</p>
+      <p style="font-size:12px; color:var(--muted); margin:8px 0 0 0; line-height:1.5;">A head-and-shoulders photo works best. It's cropped to a circle from the centre of the photo and takes the logo's place on the left, with a smaller logo moving up beside your name.</p>
     </div>
 
     <div class="check-row">
@@ -338,7 +338,7 @@ function onBannerFile(event){
 }
 
 let headshotSrc = null;
-const HEADSHOT_SIZE = 40; // shown size in px; saved at 2x so it stays sharp
+const HEADSHOT_SIZE = 60; // shown size in px; saved at 2x so it stays sharp
 
 function onHeadshotFile(event){
   const file = event.target.files && event.target.files[0];
@@ -465,16 +465,26 @@ function render(){
         </table>`
     : imgTag(b.src, b.width, b.height, b.company);
 
-  // Small round headshot sitting beside the name and title, above the blue line
+  // With a headshot: the photo takes the left column and a small logo sits beside the name
+  const SMALL_LOGOS = {
+    nordic:  { src: LOGOS.nordic.src,  w: 40,  h: 40 },
+    dnalife: { src: LOGOS.dnalife.src, w: 105, h: 40 },
+    dual:    { src: LOGOS.dual.src,    w: 119, h: 40 }
+  };
+  const smallLogo = SMALL_LOGOS[currentBrand];
+  const leftWidth = headshotSrc ? HEADSHOT_SIZE : b.width;
+  const leftHtml = headshotSrc
+    ? imgTag(headshotSrc, HEADSHOT_SIZE, HEADSHOT_SIZE, name, ' border-radius:50%;')
+    : logoHtml;
   const headshotCell = headshotSrc
-    ? `<td width="${HEADSHOT_SIZE}" style="vertical-align:bottom; padding:0 10px 0 0; width:${HEADSHOT_SIZE}px; min-width:${HEADSHOT_SIZE}px;">${imgTag(headshotSrc, HEADSHOT_SIZE, HEADSHOT_SIZE, name, ' border-radius:50%;')}</td>`
+    ? `<td width="${smallLogo.w}" style="vertical-align:bottom; padding:0 12px 0 0; width:${smallLogo.w}px; min-width:${smallLogo.w}px;">${imgTag(smallLogo.src, smallLogo.w, smallLogo.h, b.company)}</td>`
     : '';
 
   let html = `
   <table cellpadding="0" cellspacing="0" border="0" style="font-family:Arial,Helvetica,sans-serif; border-collapse:collapse;">
     <tr>
-      <td width="${b.width}" style="vertical-align:top; padding-right:8px; width:${b.width}px; min-width:${b.width}px;" rowspan="2">
-        ${logoHtml}
+      <td width="${leftWidth}" style="vertical-align:top; padding-right:8px; width:${leftWidth}px; min-width:${leftWidth}px;" rowspan="2">
+        ${leftHtml}
       </td>
       <td style="vertical-align:bottom; padding-left:14px;">
         <table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;"><tr>
